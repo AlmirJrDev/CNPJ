@@ -6,6 +6,11 @@ form.addEventListener('submit', event => {
   
   const cnpjInput = document.querySelector('#cnpj-input');
   const cnpj = cnpjInput.value.replace(/\D/g, ''); // remove caracteres não numéricos
+
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set('cnpj', cnpj);
+  window.history.pushState({}, '', `${location.pathname}?${urlParams.toString()}`);
+  
   
   getDataFromAPI(cnpj);
 });
@@ -17,14 +22,8 @@ const priceFormatter = new Intl.NumberFormat('pt-BR', {
 
 
 
-const CellFormat = new Intl.NumberFormat('pt-BR', {
-  style: 'decimal',
-  minimumIntegerDigits: 4,
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0
-});
-
 const dataFormatter = new Intl.DateTimeFormat('pt-BR')
+
 async function getDataFromAPI(cnpj) {
   const url = `https://publica.cnpj.ws/cnpj/${cnpj}`;
   const options = { method: 'GET', mode: 'cors' };
@@ -40,11 +39,16 @@ async function getDataFromAPI(cnpj) {
   } catch (error) {
     if (error.message.includes('429')) {
       resultDiv.textContent = 'O limite de requisições foi atingido. Tente novamente mais tarde.';
+    } else if (error.message.includes('402')) {
+      resultDiv.textContent = 'Pagamento necessário. Entre em contato com o suporte.';
+    } else if (error.message.includes('400')) {
+      resultDiv.textContent = 'A requisição não foi processada corretamente. Verifique os dados informados.';
     } else {
       console.error(error);
-      resultDiv.textContent = 'O limite de requisições foi atingido. Tente novamente mais tarde.';
+      resultDiv.textContent = 'Ocorreu um erro inesperado. Tente novamente mais tarde.';
     }
   }
+  
 }
 
 function displayResult(data) {
